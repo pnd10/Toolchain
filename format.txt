@@ -12,6 +12,5 @@ T
 <installation time>
 [start of text]
 <struct>
-[file separator]
 ......
 [null]

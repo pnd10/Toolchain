@@ -20,7 +20,86 @@
 #include <dirent.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <sys/stat.h>
 
+/**
+ * Recurses a given directory pointer, and writes data to the file
+ * pointer when it finds files
+ */
+void record_files(char *path, DIR *dp, FILE *fp)
+{
+	struct dirent *ent;
+	while ((ent = readdir(dp)) != NULL)
+	{
+		// skip dot files
+		if (ent->d_name[0] != '.')
+		{
+			int pathsize = strlen(path) + ent->d_namlen + 2;
+			char *newpath = malloc(pathsize * sizeof(char));
+			snprintf(newpath, pathsize, "%s/%s", path, ent->d_name);
+			
+			if (ent->d_type == DT_DIR)
+			{
+				DIR *ndp = opendir(newpath);
+				// we don't have permission, continue
+				if (ndp == NULL)
+				{
+					continue;
+				}
+				
+				record_files(newpath, ndp, fp);
+				
+				closedir(ndp);
+				free(newpath);
+			}
+			else
+			{
+				struct stat info;
+				assert(stat(newpath, &info) == 0);
+				
+				struct record rec;
+				rec.filename = newpath;
+				rec.modified = info.st_mtimespec;
+				
+				fwrite(&rec, sizeof(rec), 1, fp);
+			}
+		}
+	}
+}
+
+/**
+ * Compares two lists of files and records the results into the master receipt
+ */
+void compare_records(FILE *rcpt, FILE *before, FILE *after)
+{
+	struct record *rbef = malloc(sizeof(struct record));
+	struct record *raft = malloc(sizeof(struct record));
+	
+	while (fread(raft, sizeof(struct record), 1, after) != 0)
+	{
+		fread(rbef, sizeof(struct record), 1, before);
+		
+		// if there are new files, go until we're synced up
+		while (strcmp(raft->filename, rbef->filename) != 0)
+		{
+			fwrite(raft, sizeof(struct record), 1, rcpt);
+			fread(raft, sizeof(struct record), 1, after);
+		}
+		
+		// file was modified, so record it
+		if (raft->modified.tv_sec > rbef->modified.tv_sec)
+		{
+			fwrite(raft, sizeof(struct record), 1, rcpt);
+		}
+	}
+	
+	free(rbef);
+	free(raft);
+}
+
+/**
+ * Main method
+ */
 int main(int argc, char *argv[])
 {
 	if (argc < 2)
@@ -71,9 +150,50 @@ int main(int argc, char *argv[])
 		}
 	}
 	fwrite(&HEADER, sizeof(HEADER), 1, fp);
+	
+	time_t install_time;
+	assert(time(&install_time) != 0);
+	fwrite(&install_time, sizeof(time_t), 1, fp);
+	
+	fputc('\2', fp);
+	
+	// open the temporary before list
+	int pathsize = strlen(recpt) + 3;
+	
+	char *temppath = malloc(pathsize * sizeof(char));
+	snprintf(temppath, pathsize, "%s.1", recpt);
+	FILE *befp = fopen(temppath, "w+");
+	record_files(argv[1], dp, befp);
+	
+	// install
+	system("./test.sh");
+	
+	// open the temporary after list
+	rewinddir(dp);
+	
+	temppath[strlen(temppath) - 1] = '2';
+	FILE *affp = fopen(temppath, "w+");
+	record_files(argv[1], dp, affp);
+	
+	// compare the two file lists
+	rewind(befp);
+	rewind(affp);
+	
+	compare_records(fp, befp, affp);
+	
+	fclose(befp);
+	fclose(affp);
+	
+	// remove the two temps
+	unlink(temppath);
+	temppath[strlen(temppath) - 1] = '1';
+	unlink(temppath);
+	free(temppath);
+	
+	// finish cleaning up
+	fputc('\0', fp);
+	
 	fclose(fp);
-	
-	
 	closedir(dp);
 	
 	free(recpt);

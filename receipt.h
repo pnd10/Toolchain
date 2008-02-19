@@ -39,5 +39,5 @@ const char REPOS_ITEM[] = "%s/.mkrcpt/%s";
 struct record
 {
 	char *filename;
-	time_t modified;
+	struct timespec modified;
 };
