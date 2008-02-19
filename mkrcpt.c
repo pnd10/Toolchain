@@ -50,7 +50,6 @@ void record_files(char *path, DIR *dp, FILE *fp)
 				record_files(newpath, ndp, fp);
 				
 				closedir(ndp);
-				free(newpath);
 			}
 			else
 			{
@@ -63,6 +62,8 @@ void record_files(char *path, DIR *dp, FILE *fp)
 				
 				fwrite(&rec, sizeof(rec), 1, fp);
 			}
+			
+			free(newpath);
 		}
 	}
 }
