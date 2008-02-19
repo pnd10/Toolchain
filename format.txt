@@ -1,0 +1,17 @@
+FORMAT OF .rcpt
+=====================
+
+[start of header]
+R
+C
+P
+T
+[record separator]
+<file format version>
+[record separator]
+<installation time>
+[start of text]
+<struct>
+[file separator]
+......
+[null]
