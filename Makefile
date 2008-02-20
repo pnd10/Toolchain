@@ -22,12 +22,16 @@ LDFLAGS =
 
 # commands
 CC = gcc
+RM = rm -f
 
-# mkrcpt
+all: mkrcpt unrcpt
+
 mkrcpt:
 	$(CC) mkrcpt.c -o mkrcpt
 
 unrcpt:
 	$(CC) unrcpt.c -o unrcpt
 
-all: mkrcpt unrcpt
+clean:
+	$(RM) unrcpt
+	$(RM) mkrcpt
