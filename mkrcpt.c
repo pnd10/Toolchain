@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 	}
 	
 	char *recpt = malloc(sizeof(char) * 1024);
-	snprintf(recpt, 1024, REPOS_ITEM, getenv("HOME"), "test.rcpt");
+	snprintf(recpt, 1024, REPOS_ITEM, getenv("HOME"), "test");
 			
 	FILE *fp = fopen(recpt, "w");
 	if (fp == NULL)

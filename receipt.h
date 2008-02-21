@@ -15,22 +15,26 @@
  */
 
 #include <time.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 /**
  * Header of the receipt file:
  * [start_of_header]RCPT[record_separator]<file_format_version>[record_separator]
  */
 const char HEADER[] = {'\1', 'R', 'C', 'P', 'T', '\30', '1', '\30'};
+const int HEADER_LENGTH = 8;
 
 /**
  * Character constants for the repository of receipts and the path to a receipt item
  */
 #ifdef __APPLE__
 const char REPOS[] = "%s/Library/mkrcpt";
-const char REPOS_ITEM[] = "%s/Library/mkrcpt/%s";
+const char REPOS_ITEM[] = "%s/Library/mkrcpt/%s.rcpt";
 #else
 const char REPOS[] = "%s/.mkrcpt";
-const char REPOS_ITEM[] = "%s/.mkrcpt/%s";
+const char REPOS_ITEM[] = "%s/.mkrcpt/%s.rcpt";
 #endif
 
 /**
@@ -41,3 +45,19 @@ struct record
 	char *filename;
 	struct timespec modified;
 };
+
+/**
+ * Generates the path to a receipt file. Takes in a pointer to
+ * the receipt path <dest> and fills it with the path ending in
+ * <name>.rcpt
+ */
+void rcpt_path(char *dest, size_t destsize, char *name)
+{
+	if (index(name, '/') != NULL)
+	{
+		printf("The receipt name cannot contain a path separator\n");
+		exit(-1);
+	}
+	
+	snprintf(dest, destsize, REPOS_ITEM, getenv("HOME"), name);
+}
