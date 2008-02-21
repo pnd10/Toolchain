@@ -90,7 +90,7 @@ int read_struct(struct record *dest, FILE *fp)
 	}
 	
 	dest->filename = malloc(pathlen * sizeof(char));
-	fread(dest->filename, pathlen, 1, fp);
+	fread(dest->filename, pathlen + 1, 1, fp);
 	
 	if (fgetc(fp) != '\31')
 	{

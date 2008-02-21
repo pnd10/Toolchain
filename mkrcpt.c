@@ -39,7 +39,7 @@ void write_struct(struct record *rec, FILE *fp)
 	fputc('\31', fp);
 	
 	// write the filename
-	fwrite(rec->filename, strlen(rec->filename), 1, fp);
+	fwrite(rec->filename, pathlen + 1, 1, fp);
 	
 	// another unit separator
 	fputc('\31', fp);
@@ -191,6 +191,7 @@ int main(int argc, char *argv[])
 	snprintf(temppath, pathsize, "%s.1", recpt);
 	FILE *befp = fopen(temppath, "w+");
 	record_files(argv[1], dp, befp);
+	fputc('\0', befp);
 	
 	// install
 	system("./test.sh");
@@ -201,6 +202,7 @@ int main(int argc, char *argv[])
 	temppath[strlen(temppath) - 1] = '2';
 	FILE *affp = fopen(temppath, "w+");
 	record_files(argv[1], dp, affp);
+	fputc('\0', affp);
 	
 	// compare the two file lists
 	rewind(befp);
