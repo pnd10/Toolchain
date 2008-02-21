@@ -21,6 +21,32 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <unistd.h>
+
+/**
+ * Writes out a record struct to the given file pointer
+ */
+void write_struct(struct record *rec, FILE *fp)
+{
+	// lay down a record separator
+	fputc('\30', fp);
+	
+	// write the legth of the string
+	int pathlen = strlen(rec->filename);
+	fwrite(&pathlen, sizeof(size_t), 1, fp);
+	
+	// put in a unit separator
+	fputc('\31', fp);
+	
+	// write the filename
+	fwrite(rec->filename, strlen(rec->filename), 1, fp);
+	
+	// another unit separator
+	fputc('\31', fp);
+	
+	// write the modification time
+	fwrite(&rec->modified, sizeof(struct timespec), 1, fp);
+}
 
 /**
  * Recurses a given directory pointer, and writes data to the file
@@ -60,7 +86,7 @@ void record_files(char *path, DIR *dp, FILE *fp)
 				rec.filename = newpath;
 				rec.modified = info.st_mtimespec;
 				
-				fwrite(&rec, sizeof(rec), 1, fp);
+				write_struct(&rec, fp);
 			}
 			
 			free(newpath);
@@ -76,21 +102,21 @@ void compare_records(FILE *rcpt, FILE *before, FILE *after)
 	struct record *rbef = malloc(sizeof(struct record));
 	struct record *raft = malloc(sizeof(struct record));
 	
-	while (fread(raft, sizeof(struct record), 1, after) != 0)
+	while (read_struct(raft, after) == 0)
 	{
-		fread(rbef, sizeof(struct record), 1, before);
+		read_struct(rbef, before);
 		
 		// if there are new files, go until we're synced up
 		while (strcmp(raft->filename, rbef->filename) != 0)
 		{
-			fwrite(raft, sizeof(struct record), 1, rcpt);
-			fread(raft, sizeof(struct record), 1, after);
+			write_struct(raft, rcpt);
+			read_struct(raft, after);
 		}
 		
 		// file was modified, so record it
 		if (raft->modified.tv_sec > rbef->modified.tv_sec)
 		{
-			fwrite(raft, sizeof(struct record), 1, rcpt);
+			write_struct(raft, rcpt);
 		}
 	}
 	

@@ -61,3 +61,43 @@ void rcpt_path(char *dest, size_t destsize, char *name)
 	
 	snprintf(dest, destsize, REPOS_ITEM, getenv("HOME"), name);
 }
+
+/**
+ * Reads, from a given file pointer, a record struct into the dest. Returns
+ * 0 if it succeeds, a positive number if it's at the end of file, and a negative number
+ * if the file is malformed.
+ *
+ * Note: you will need to free() the dest->filename yourself aas this malloc()s the pointer
+ */
+int read_struct(struct record *dest, FILE *fp)
+{
+	char c = fgetc(fp);
+	if (c == '\0')
+	{
+		return 1;
+	}
+	else if (c != '\30')
+	{
+		return -1;
+	}
+	
+	size_t pathlen;
+	fread(&pathlen, sizeof(size_t), 1, fp);
+	
+	if (fgetc(fp) != '\31')
+	{
+		return -2;
+	}
+	
+	dest->filename = malloc(pathlen * sizeof(char));
+	fread(dest->filename, pathlen, 1, fp);
+	
+	if (fgetc(fp) != '\31')
+	{
+		return -3;
+	}
+	
+	fread(&dest->modified, sizeof(struct timespec), 1, fp);
+	
+	return 0;
+}

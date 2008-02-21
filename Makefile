@@ -15,7 +15,7 @@
 #
 
 # compiler flags
-CFLAGS = -g -O2 -Wall
+CFLAGS = -O2 -Wall
 LDFLAGS =
 
 # destination directories
@@ -27,11 +27,15 @@ RM = rm -f
 all: mkrcpt unrcpt
 
 mkrcpt:
-	$(CC) mkrcpt.c -o mkrcpt
+	$(CC) mkrcpt.c $(CFLAGS) -o mkrcpt
 
 unrcpt:
-	$(CC) unrcpt.c -o unrcpt
+	$(CC) unrcpt.c $(CFLAGS) -o unrcpt
 
 clean:
 	$(RM) unrcpt
 	$(RM) mkrcpt
+
+debug: clean
+	$(CC) mkrcpt.c -Wall -g -o mkrcpt
+	$(CC) unrcpt.c -Wall -g -o unrcpt

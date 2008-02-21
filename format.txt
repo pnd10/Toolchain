@@ -11,6 +11,12 @@ T
 [record separator]
 <installation time>
 [start of text]
-<struct>
-......
+(
+	[record_separator]
+	<length of filename>
+	[unit_separator]
+	<filename>
+	[unit_separator]
+	<modified time>
+) ...
 [null]
