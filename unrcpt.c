@@ -18,6 +18,7 @@
 #include <dirent.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
@@ -61,7 +62,7 @@ int main(int argc, char *argv[])
 	int rsize;
 	while ((rsize = fread(&rec, sizeof(struct record), 1, fp)) != 0)
 	{
-		printf("rsize: %i/%i; %i\n", rsize, sizeof(struct record), ferror(fp));
+		// printf("rsize: %i/%i; %i\n", rsize, sizeof(struct record), ferror(fp));
 		if (stat(rec.filename, &info) != 0)
 		{
 			printf("Could not find/open %s\n", rec.filename);
