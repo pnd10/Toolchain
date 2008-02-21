@@ -104,13 +104,16 @@ void compare_records(FILE *rcpt, FILE *before, FILE *after)
 	
 	while (read_struct(raft, after) == 0)
 	{
-		read_struct(rbef, before);
+		assert(read_struct(rbef, before) >= 0);
 		
 		// if there are new files, go until we're synced up
 		while (strcmp(raft->filename, rbef->filename) != 0)
 		{
 			write_struct(raft, rcpt);
-			read_struct(raft, after);
+			if (read_struct(raft, after) != 0)
+			{
+				goto cleanup;
+			}
 		}
 		
 		// file was modified, so record it
@@ -120,8 +123,9 @@ void compare_records(FILE *rcpt, FILE *before, FILE *after)
 		}
 	}
 	
-	free(rbef);
-	free(raft);
+	cleanup:
+		free(rbef);
+		free(raft);
 }
 
 /**
