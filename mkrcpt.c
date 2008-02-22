@@ -110,8 +110,10 @@ void compare_records(FILE *rcpt, FILE *before, FILE *after)
 		while (strcmp(raft->filename, rbef->filename) != 0)
 		{
 			write_struct(raft, rcpt);
+			free(raft->filename);
 			if (read_struct(raft, after) != 0)
 			{
+				free(rbef->filename);
 				goto cleanup;
 			}
 		}
@@ -121,6 +123,9 @@ void compare_records(FILE *rcpt, FILE *before, FILE *after)
 		{
 			write_struct(raft, rcpt);
 		}
+		
+		free(raft->filename);
+		free(rbef->filename);
 	}
 	
 	cleanup:
