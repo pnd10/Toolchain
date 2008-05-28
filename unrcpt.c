@@ -59,8 +59,7 @@ int main(int argc, char *argv[])
 	// start reading structs
 	struct record rec;
 	struct stat info;
-	int rsize;
-	while ((rsize = fread(&rec, sizeof(struct record), 1, fp)) != 0)
+	while (read_struct(&rec, fp) == 0)
 	{
 		// printf("rsize: %i/%i; %i\n", rsize, sizeof(struct record), ferror(fp));
 		if (stat(rec.filename, &info) != 0)
@@ -77,6 +76,7 @@ int main(int argc, char *argv[])
 		{
 			printf("Deleting %s\n", rec.filename);
 		}
+		free(rec.filename);
 	}
 	
 	fclose(fp);

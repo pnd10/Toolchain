@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 	fputc('\0', befp);
 	
 	// install
-	system("./test.sh");
+	system("make install");
 	
 	// open the temporary after list
 	rewinddir(dp);
