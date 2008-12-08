@@ -31,10 +31,14 @@ def create_index(path):
 def _walk_path(path, index):
     """(PRIVATE) walks down a given path and adds items to the index"""
     
-    for f in os.listdir(path):
+    try:
+        contents = os.listdir(path)
+    except OSError:
+        return index
+    
+    for f in contents:
         pathname = os.path.join(path, f)
         statinfo = os.stat(pathname)
-        if 
         if stat.S_ISDIR(statinfo[stat.ST_MODE]):
             index.update(_walk_path(pathname, dict()))
         else:
@@ -71,7 +75,7 @@ def rcpt_dir():
     else:
         rcptdir = "~/.mkrcpt/"
     
-    rcptdir = rcptdir.expanduser()
+    rcptdir = os.path.expanduser(rcptdir)
         
     if not os.path.exists(rcptdir) or not os.path.isdir(rcptdir):
         os.mkdir(rcptdir)
