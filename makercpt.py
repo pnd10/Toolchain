@@ -34,6 +34,7 @@ def _walk_path(path, index):
     for f in os.listdir(path):
         pathname = os.path.join(path, f)
         statinfo = os.stat(pathname)
+        if 
         if stat.S_ISDIR(statinfo[stat.ST_MODE]):
             index.update(_walk_path(pathname, dict()))
         else:
@@ -65,11 +66,12 @@ def create_entry(path, mtime):
 
 def rcpt_dir():
     """Returns the location to store receipt files. Also checks for existence, and creates it if it does not exist"""
-    home = os.getenv("HOME")
     if sys.platform == "darwin":
-        rcptdir = os.path.join(home, "Library/MakeReceipt")
+        rcptdir = "~/Library/MakeReceipt"
     else:
-        rcptdir = os.path.join(home, ".mkrcpt/")
+        rcptdir = "~/.mkrcpt/"
+    
+    rcptdir = rcptdir.expanduser()
         
     if not os.path.exists(rcptdir) or not os.path.isdir(rcptdir):
         os.mkdir(rcptdir)
