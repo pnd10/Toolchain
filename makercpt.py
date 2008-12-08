@@ -21,6 +21,7 @@ RCPT_VERSION = 1
 import sys
 import os
 import stat
+import random
 
 def create_index(path):
     """Creates a listing of all the files in the given directory"""
@@ -60,6 +61,19 @@ def create_receipt(name, entries):
 def create_entry(path, mtime):
     """Constructs an XML tag given a path name and the mtime"""
     return ("<entry path=\"%s\" mtime=\"%d\" />" % (path, mtime))
+
+def rcpt_dir():
+    """Returns the location to store receipt files. Also checks for existence, and creates it if it does not exist"""
+    home = os.getenv("HOME")
+    if sys.platform == "darwin":
+        rcptdir = os.path.join(home, "Library/MakeReceipt")
+    else:
+        rcptdir = os.path.join(home, ".mkrcpt/")
+        
+    if not os.path.exists(rcptdir) or not os.path.isdir(rcptdir):
+        os.mkdir(rcptdir)
+    
+    return rcptdir
     
 def main():
     if len(sys.argv) < 3:
@@ -77,7 +91,17 @@ def main():
     	
     	entries = create_diff(before, after)
     	
-    	print(create_receipt(sys.argv[2], entries))
+    	xml = create_receipt(sys.argv[2], entries)
+    	filename = os.path.join(rcpt_dir(), sys.argv[2] + ".xml")
+    	
+    	if os.path.exists(filename):
+    	    filename = os.path.join(rcpt_dir(), sys.argv[2] + "-" + str(int(random.random() * 100000)) + ".xml")
+    	    print("A receipt with this name already exists, using " + filename + " instead.")
+    	    print("You may want to clean up your receipts directory (" + rcpt_dir() + ") to avoid this in the future.")
+    	
+    	receipt = open(filename, 'w')
+    	receipt.write(xml)
+    	receipt.close()
 
 if __name__ == "__main__":
     main()
