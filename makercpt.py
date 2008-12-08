@@ -22,6 +22,7 @@ import sys
 import os
 import stat
 import random
+import xml.etree.ElementTree as ET
 
 def create_index(path):
     """Creates a listing of all the files in the given directory"""
@@ -102,6 +103,21 @@ def main():
     	receipt = open(filename, 'w')
     	receipt.write(xml)
     	receipt.close()
+    elif sys.argv[1] == "remove":
+        filename = os.path.join(rcpt_dir(), sys.argv[2] + ".xml")
+        receipt = ET.parse(filename)
+        elements = receipt.getroot().getchildren()        
+        for e in elements:
+            path = e.get("path")
+            mtime = int(e.get("mtime"))
+            if os.stat(path)[stat.ST_MTIME] >= mtime:
+                result = raw_input("File " + path + " has been modified since it was installed. Delete? [N/y]: ")
+                result = result.lower()
+                if result != "y":
+                    continue
+            
+            os.unlink(path)
+            print("Deleting " + path)
 
 if __name__ == "__main__":
     main()
