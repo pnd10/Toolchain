@@ -16,6 +16,8 @@
 # write to the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 #
 
+RCPT_VERSION = 1
+
 import sys
 import os
 import stat
@@ -39,14 +41,25 @@ def _walk_path(path, index):
 
 def create_diff(old, new):
     """Compares two dictionaries, checks the modification date [value] and then returns the mismatching/new ones"""
-    result = dict()
+    result = list()
     for path in new.keys():
         if path in old:
             if new[path] > old[path]:
-                result[path] = new[path]
+                result.append(create_entry(path, new[path]))
         else:
-            result[path] = new[path]
+            result.append(create_entry(path, new[path]))
     return result
+
+def create_receipt(name, entries):
+    """Generates the full XML structure of the receipt file, given the receipt name and the list of entries"""
+    xmlout = "<receipt name=\"" + name + "\" version=\"" + str(RCPT_VERSION) + "\">\n\t"
+    xmlout += "\n\t".join(entries)
+    xmlout += "\n</receipt>"
+    return xmlout
+
+def create_entry(path, mtime):
+    """Constructs an XML tag given a path name and the mtime"""
+    return ("<entry path=\"%s\" mtime=\"%d\" />" % (path, mtime))
     
 def main():
     if len(sys.argv) < 3:
@@ -62,7 +75,9 @@ def main():
     	os.system("make install" if len(sys.argv) != 5 or sys.argv[4] == "" else sys.argv[4])
     	after = create_index(sys.argv[3])
     	
-    	print(create_diff(before, after))
+    	entries = create_diff(before, after)
+    	
+    	print(create_receipt(sys.argv[2], entries))
 
 if __name__ == "__main__":
     main()
