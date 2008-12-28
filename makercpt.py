@@ -38,7 +38,10 @@ def _walk_path(path, index):
     
     for f in contents:
         pathname = os.path.join(path, f)
-        statinfo = os.stat(pathname)
+        try:
+            statinfo = os.stat(pathname)
+        except OSError:
+            continue
         if stat.S_ISDIR(statinfo[stat.ST_MODE]):
             index.update(_walk_path(pathname, dict()))
         else:
