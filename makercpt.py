@@ -117,7 +117,7 @@ def main():
             path = e.get("path")
             mtime = int(e.get("mtime"))
             if os.stat(path)[stat.ST_MTIME] >= mtime:
-                result = raw_input("File " + path + " has been modified since it was installed. Delete? [N/y]: ")
+                result = input("File " + path + " has been modified since it was installed. Delete? [N/y]: ")
                 result = result.lower()
                 if result != "y":
                     continue
