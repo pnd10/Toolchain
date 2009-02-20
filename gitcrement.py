@@ -1,6 +1,6 @@
-#!/usr/bin/env python3.0
+#!/usr/local/bin/python3.0
 """
-FlashSync
+Gitcrement
 Copyright (c) 2009, Blue Static <http://www.bluestatic.org>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU
@@ -15,6 +15,8 @@ You should have received a copy of the GNU General Public License along with thi
 see <http://www.gnu.org/licenses/>.
 """
 
+git = "/usr/local/bin/git"
+
 import os, subprocess, sys
 import sqlite3, time
 from datetime import datetime
@@ -25,6 +27,10 @@ def main():
 	
 	if sys.argv[1] == "init":
 		init()
+		return
+	
+	checkDB()
+	
 	if sys.argv[1] == "current":
 		current()
 	elif sys.argv[1] == "next":
@@ -38,13 +44,18 @@ def db():
 	global SQL
 	
 	# make sure we're in a git repo
-	if subprocess.getoutput("git st 1>/dev/null"):
+	if subprocess.getoutput(git + " status 1>/dev/null"):
 		sys.exit("You are not in a Git repository")
 	
 	if SQL == None:
 		SQL = sqlite3.connect(".gitcrement")
 	
 	return SQL
+
+def checkDB():
+	"""Checks to make sure the database exists"""
+	if not os.path.exists(".gitcrement"):
+		sys.exit("There is no Gitcrement repository present")
 
 def init():
 	"""Initializes the current directory for gitcrement"""
@@ -80,7 +91,7 @@ def current():
 
 def next():
 	"""Creates a new build number"""
-	git_hash = subprocess.getoutput("git rev-list -1 HEAD")
+	git_hash = subprocess.getoutput(git + " rev-list -1 HEAD")
 	username = subprocess.getoutput("whoami")
 	cur = db().execute("INSERT INTO numbers VALUES (NULL, ?, ?, ?, NULL)", (git_hash, username, int(time.time())))
 	db().commit()
