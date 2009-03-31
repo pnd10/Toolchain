@@ -1,0 +1,22 @@
+FORMAT OF .rcpt
+=====================
+
+[start of header]
+R
+C
+P
+T
+[record separator]
+<file format version>
+[record separator]
+<installation time>
+[start of text]
+(
+	[record_separator]
+	<length of filename>
+	[unit_separator]
+	<filename>
+	[unit_separator]
+	<modified time>
+) ...
+[null]
