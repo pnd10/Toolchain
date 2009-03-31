@@ -119,7 +119,12 @@ def main():
         for e in elements:
             path = e.get("path")
             mtime = int(e.get("mtime"))
-            if os.stat(path)[stat.ST_MTIME] > mtime:
+			stattime = None
+			try:
+				stattime = os.stat(path)[stat.ST_MTIME]
+			except OSError:
+				continue
+			if stattime > mtime:
                 result = input("File " + path + " has been modified since it was installed. Delete? [N/y]: ")
                 result = result.lower()
                 if result != "y":
