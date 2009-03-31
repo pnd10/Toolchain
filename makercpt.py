@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #
 # GNU Make Package Receipter
@@ -85,14 +85,17 @@ def rcpt_dir():
     
     return rcptdir
     
+def usage():
+	print("Usage: makercpt.py <install|remove> <name> [<installation path to watch>] [<installation command = 'make install'>]")
+	
 def main():
     if len(sys.argv) < 3:
-    	print("Usage: makercpt.py <install|remove> <name> [<installation path to watch>] [<installation command = 'make install'>]")
+		usage()
     	exit(-1)
 
     if sys.argv[1] == "install":
     	if len(sys.argv) < 4:
-    		print("Usage: makercpt.py install <name> <path> <command = 'make install'>")
+			usage()
     		exit(-1)
 	
     	before = create_index(sys.argv[3])
@@ -132,6 +135,9 @@ def main():
             
             os.unlink(path)
             print("Deleting " + path)
+	else:
+		usage()
+		exit(-1)
 
 if __name__ == "__main__":
     main()
