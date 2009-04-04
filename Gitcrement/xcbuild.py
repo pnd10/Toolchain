@@ -23,7 +23,7 @@ from os import environ
 if environ["CONFIGURATION"] == "Release":
 	subprocess.getoutput(gitcrement + " next")
 
-subprocess.call(["/Users/rsesek/Library/Shell/bin/gitcrement", "current"])
+subprocess.call([gitcrement, "current"])
 
 build = subprocess.getoutput(gitcrement + " current")
 try:
