@@ -43,10 +43,10 @@ BUILD_ALT_BASE_URL = "http://build.chromium.org/buildbot/snapshots/sub-rel-mac"
 
 ################################################################################
 
+import math
 import os
 import re
 import shutil
-import subprocess
 import sys
 import urllib
 
@@ -81,8 +81,11 @@ def tryRevision(rev):
 	
 	# Download the file.
 	try:
-		urllib.urlretrieve(BUILD_BASE_URL + (BUILD_ARCHIVE_URL % rev) + BUILD_ZIP_NAME, BUILD_ZIP_NAME)
-		pass
+		if (rev > BUILD_ALT_REV):
+			base = BUILD_BASE_URL
+		else:
+			base = BUILD_ALT_BASE_URL
+		urllib.urlretrieve(base + (BUILD_ARCHIVE_URL % rev) + BUILD_ZIP_NAME, BUILD_ZIP_NAME)
 	except Exception, e:
 		print("Could not retrieve the download. Sorry.")
 		sys.exit(-1)
@@ -139,7 +142,13 @@ def main():
 	
 	# Binary search time!
 	while (good < bad):
-		print("Candidates: %s" % revlist[good:bad])
+		candidates = revlist[good:bad]
+		numPoss = len(candidates)
+		if (numPoss > 10):
+			
+			print("%d candidates. %d tries left." % (numPoss, round(math.log(numPoss, 2))))
+		else:
+			print("Candidates: %s" % revlist[good:bad])
 		
 		# Cut the problem in half...
 		test = int((bad - good) / 2) + good
