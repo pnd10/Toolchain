@@ -37,10 +37,6 @@ BUILD_EXE_NAME = "Chromium.app"
 # URL to the ViewVC commit page.
 BUILD_VIEWVC_URL = "http://src.chromium.org/viewvc/chrome?view=rev&revision=%d"
 
-# Revisions below this number will use BUILD_ARCHIVE_URL_ALT
-BUILD_ALT_REV = 17731
-BUILD_ALT_BASE_URL = "http://build.chromium.org/buildbot/snapshots/sub-rel-mac"
-
 ################################################################################
 
 import math
@@ -60,12 +56,7 @@ def parseDirectoryIndex(url):
 # Gets the list of revision numbers between |good| and |bad|.
 def getRevList(good, bad):
 	# Download the main revlist.
-	revlist = parseDirectoryIndex(BUILD_BASE_URL)
-	
-	# Check to see if we need to use an alternate build archive, too.
-	if (good <= BUILD_ALT_REV or bad <= BUILD_ALT_REV):
-		revlist += parseDirectoryIndex(BUILD_ALT_BASE_URL)
-	
+	revlist = parseDirectoryIndex(BUILD_BASE_URL)	
 	revlist = map(lambda r: int(r), revlist)
 	revlist.sort()
 	return revlist
@@ -81,11 +72,7 @@ def tryRevision(rev):
 	
 	# Download the file.
 	try:
-		if (rev > BUILD_ALT_REV):
-			base = BUILD_BASE_URL
-		else:
-			base = BUILD_ALT_BASE_URL
-		urllib.urlretrieve(base + (BUILD_ARCHIVE_URL % rev) + BUILD_ZIP_NAME, BUILD_ZIP_NAME)
+		urllib.urlretrieve(BUILD_BASE_URL + (BUILD_ARCHIVE_URL % rev) + BUILD_ZIP_NAME, BUILD_ZIP_NAME)
 	except Exception, e:
 		print("Could not retrieve the download. Sorry.")
 		sys.exit(-1)
@@ -145,7 +132,6 @@ def main():
 		candidates = revlist[good:bad]
 		numPoss = len(candidates)
 		if (numPoss > 10):
-			
 			print("%d candidates. %d tries left." % (numPoss, round(math.log(numPoss, 2))))
 		else:
 			print("Candidates: %s" % revlist[good:bad])
