@@ -56,8 +56,9 @@ def parseDirectoryIndex(url):
 # Gets the list of revision numbers between |good| and |bad|.
 def getRevList(good, bad):
 	# Download the main revlist.
-	revlist = parseDirectoryIndex(BUILD_BASE_URL)	
+	revlist = parseDirectoryIndex(BUILD_BASE_URL)
 	revlist = map(lambda r: int(r), revlist)
+	revlist = filter(lambda r: range(good, bad).__contains__(int(r)), revlist)
 	revlist.sort()
 	return revlist
 
