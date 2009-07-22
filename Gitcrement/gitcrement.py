@@ -23,7 +23,7 @@ from datetime import datetime
 
 def main():
 	if len(sys.argv) < 2:
-		sys.exit("Usage: gitcrement [init|current|next|list]")
+		sys.exit("Usage: gitcrement [init|current|next|list|info]")
 	
 	if sys.argv[1] == "init":
 		init()
@@ -37,6 +37,8 @@ def main():
 		next()
 	elif sys.argv[1] == "list":
 		numlist()
+	elif sys.argv[1] == "info":
+	  info(int(sys.argv[2]))
 
 SQL = None
 def db():
@@ -101,6 +103,20 @@ def numlist():
 	numbers = db().execute("SELECT * FROM numbers ORDER BY id DESC").fetchall()
 	for number in numbers:
 		print("%4d: By %s on %s at %s" % (number[0], number[2], datetime.fromtimestamp(number[3]).isoformat(" "), number[1]))
+
+def info(build_num):
+  """Gets information on a particular build number"""
+  build_info = db().execute("SELECT * FROM numbers WHERE id = ?", (build_num,)).fetchone()
+  if not build_info:
+    sys.exit("Could not find that build. Sorry.")
+  print("--------------------------------- BUILD %d -------------------------------------" % int(build_info[0]))
+  print("Build number: %d" % int(build_info[0]))
+  print("  Build date: %s" % datetime.fromtimestamp(build_info[3]).isoformat(" "))
+  print("    Built by: %s" % build_info[2])
+  print("--------------------------------------------------------------------------------")
+  print(subprocess.getoutput("git log --no-color -1 %s"  % build_info[1]))
+  print("--------------------------------- BUILD %d -------------------------------------" % int(build_info[0]))
+  
 
 if __name__ == '__main__':
 	main()
