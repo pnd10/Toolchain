@@ -4,6 +4,10 @@
 
 This script will perform a speed test and will append the results to a CSV
 file. You can use this script as a cron job to regularly test your bandwidth.
+
+I recommend using this cron format to run it every 17 hours (which will test
+at different times every day):
+0 */17 * * * /path/to/speed-test.py
 """
 
 from datetime import datetime
@@ -38,7 +42,7 @@ def RunSpeedTest(work_dir):
   # Stop timer.
   end_time = time.time()
   
-  # Get WGET reporting information.
+  # Get wget reporting information.
   logfile = open(work_dir + '/log.txt', 'r')
   wget_output = logfile.readlines()
   logfile.close()
