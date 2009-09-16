@@ -27,7 +27,7 @@ RESULT_DATA_FILE = os.path.expanduser("~/speed-test-results.txt")
 
 """The file to try to download, used for testing speed."""
 SPEED_TEST_FILE = "http://ubuntu.media.mit.edu/ubuntu-releases/jaunty/ubuntu-9.04-desktop-i386.iso"
-SPEED_TEST_FILE = "http://butv10.com/content/av/thewire/2009x91503.mov" # Testing only.
+# SPEED_TEST_FILE = "http://butv10.com/content/av/thewire/2009x91503.mov" # Testing only.
 
 """The number of recent data trys that should be included in the chart."""
 CHART_CARDINALITY = 50
