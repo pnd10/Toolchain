@@ -27,12 +27,16 @@ RESULT_DATA_FILE = os.path.expanduser("~/speed-test-results.txt")
 
 """The file to try to download, used for testing speed."""
 SPEED_TEST_FILE = "http://ubuntu.media.mit.edu/ubuntu-releases/jaunty/ubuntu-9.04-desktop-i386.iso"
+SPEED_TEST_FILE = "http://butv10.com/content/av/thewire/2009x91503.mov" # Testing only.
 
 """The number of recent data trys that should be included in the chart."""
 CHART_CARDINALITY = 50
 
 """Location to store the chart."""
 CHART_FILE = os.path.expanduser("~/speed-test-chart.png")
+
+"""Path to the wget executable."""
+WGET_PATH = "/opt/local/bin/wget"
 
 ###################################################################
 
@@ -54,7 +58,7 @@ def RunSpeedTest(work_dir):
   start_time = time.time()
   
   # Run the speed test.
-  proc = subprocess.Popen("wget -v -o %s -O output.bin '%s'" % (work_dir+'/log.txt', SPEED_TEST_FILE), shell=True, cwd=work_dir)
+  proc = subprocess.Popen(WGET_PATH + " -v -o %s -O output.bin '%s'" % (work_dir+'/log.txt', SPEED_TEST_FILE), shell=True, cwd=work_dir)
   proc.wait()
   
   # Stop timer.
@@ -140,7 +144,7 @@ def Main():
   do_setup = False
   if not os.path.exists(RESULT_DATA_FILE):
     do_setup = True
-  results_ = open(RESULT_DATA_FILE, 'a')
+  results_ = open(RESULT_DATA_FILE, 'a+')
   if do_setup:
     results_.write("timestamp,date,wget_speed,py_speed,time,fsize\n")
   
