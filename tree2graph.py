@@ -70,7 +70,7 @@ def _CreateGraffleNode(node, graphic_id):
   graf['ID']      = graphic_id
   graf['Class']   = "ShapedGraphic"
   graf['Shape']   = "Circle"
-  graf['Text']    = {"Text": "{\rtf1\ansi " + node.value + "}"}
+  graf['Text']    = {"Text": "{\\rtf1\\ansi " + node.value + "}"}
   graf['Bounds']  = "{{0,0},{50,50}}"
   return graf
 
@@ -83,28 +83,51 @@ def _CreateGraffleLink(target, dest, graphic_id):
   graf['Head']    = {"ID": target['ID']}
   graf['Tail']    = {"ID": dest['ID']}
   graf['Style']   = {
-    "storke": {
+    "stroke": {
       'HeadArrow' : "FilledArrow",
       'LineType'  : 1,
-      'TailArrow' : 0
+      'TailArrow' : '0'
     }
   }
   return graf
+
+def _CreateGraffleFromNode(node, start_id):
+  """docstring for _CreateGraffleFromNode"""
+  graphics = list()
+  
+  graf = _CreateGraffleNode(node, start_id)
+  start_id += 1
+  graphics.append(graf)
+  
+  for child in node.children:
+    start_id += 1
+    child_graf = _CreateGraffleNode(child, start_id)
+    graphics.append(child_graf)
+    
+    start_id += 1
+    graphics.append(_CreateGraffleLink(child_graf, graf, start_id))
+    
+    start_id += 1
+    _CreateGraffleFromNode(child, start_id)
+  
+  return graphics
 
 def CreateGraffle(root):
   """Creates a dictionary, representing an OmniGraffle document."""
   doc = dict()
   doc['AutoAdjust']           = True
   doc['BackgroundGraphic']    = {
-    "Class" : "SolidGraphic",
-    "ID"    : 2
+    "Class"  : "SolidGraphic",
+    "ID"     : 2,
+    "Bounds" : "{{0,0},{1000,1000}}"
   }
+  doc['GraphicsList']         = _CreateGraffleFromNode(root, 3)
   doc['CanvasOrigin']         = "{0,0}"
   doc['GraphDocumentVersion'] = 6
   doc['OutlineStyle']         = "Basic"
-  doc['PageBreaks']           = False
+  doc['PageBreaks']           = "NO"
   doc['LayoutInfo']           = {
-    'Animate'         : False,
+    'Animate'         : "NO",
     'AutoLayout'      : 2,
     'LineLength'      : 0.5,
     'circoMinDist'    : 15,
@@ -115,8 +138,10 @@ def CreateGraffle(root):
 
 def Main():
   """Reads from stdin the serialized tree structure and assembles a tree."""
-  nodes = sys.stdin.readlines()
-  root  = ReadTree(nodes)
+  nodes   = sys.stdin.readlines()
+  root    = ReadTree(nodes)
+  graffle = CreateGraffle(root)
+  plistlib.writePlist(graffle, sys.stdout)
   
 if __name__ == '__main__':
   Main()
