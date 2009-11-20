@@ -64,21 +64,25 @@ def ReadTree(flat_nodes):
   _HelpReadTree(root, nodes[1:])
   return root
 
-def _CreateGraffleNode(node, graphic_id):
+def _CreateGraffleNode(node):
   """Creates a node for an OmniGraffle document."""
+  global gid
+  gid += 1
   graf = dict()
-  graf['ID']      = graphic_id
+  graf['ID']      = gid
   graf['Class']   = "ShapedGraphic"
   graf['Shape']   = "Circle"
   graf['Text']    = {"Text": "{\\rtf1\\ansi " + node.value + "}"}
   graf['Bounds']  = "{{0,0},{50,50}}"
   return graf
 
-def _CreateGraffleLink(target, dest, graphic_id):
+def _CreateGraffleLink(target, dest):
   """Creates a OmniGraffle link between to graffle nodes (created via
   _CreateGraffleLink())."""
+  global gid
+  gid += 1
   graf = dict()
-  graf['ID']      = graphic_id
+  graf['ID']      = gid
   graf['Class']   = "LineGraphic"
   graf['Head']    = {"ID": target['ID']}
   graf['Tail']    = {"ID": dest['ID']}
@@ -91,29 +95,24 @@ def _CreateGraffleLink(target, dest, graphic_id):
   }
   return graf
 
-def _CreateGraffleFromNode(node, start_id):
+def _CreateGraffleFromNode(node):
   """docstring for _CreateGraffleFromNode"""
   graphics = list()
-  
-  graf = _CreateGraffleNode(node, start_id)
-  start_id += 1
+  graf     = _CreateGraffleNode(node)
   graphics.append(graf)
   
   for child in node.children:
-    start_id += 1
-    child_graf = _CreateGraffleNode(child, start_id)
-    graphics.append(child_graf)
-    
-    start_id += 1
-    graphics.append(_CreateGraffleLink(child_graf, graf, start_id))
-    
-    start_id += 1
-    _CreateGraffleFromNode(child, start_id)
+    child_grafs = _CreateGraffleFromNode(child)
+    for cgraf in child_grafs:
+      graphics.append(cgraf)
+      graphics.append(_CreateGraffleLink(cgraf, graf))
   
   return graphics
 
 def CreateGraffle(root):
   """Creates a dictionary, representing an OmniGraffle document."""
+  global gid
+  gid = 3
   doc = dict()
   doc['AutoAdjust']           = True
   doc['BackgroundGraphic']    = {
@@ -121,7 +120,7 @@ def CreateGraffle(root):
     "ID"     : 2,
     "Bounds" : "{{0,0},{1000,1000}}"
   }
-  doc['GraphicsList']         = _CreateGraffleFromNode(root, 3)
+  doc['GraphicsList']         = _CreateGraffleFromNode(root)
   doc['CanvasOrigin']         = "{0,0}"
   doc['GraphDocumentVersion'] = 6
   doc['OutlineStyle']         = "Basic"
