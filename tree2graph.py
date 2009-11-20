@@ -39,9 +39,8 @@ def _ParseNode(string):
   last = len(string) - 1
   if string[last] == '\n':
     string = string[0:last]
-    
-  pos = string.find(':')
   
+  pos               = string.find(':')
   node              = TreeNode(string[pos+1:])
   node.num_children = int(string[0:pos])
   return node
@@ -95,32 +94,35 @@ def _CreateGraffleLink(target, dest):
   }
   return graf
 
-def _CreateGraffleFromNode(node):
-  """docstring for _CreateGraffleFromNode"""
-  graphics = list()
-  graf     = _CreateGraffleNode(node)
+def _CreateGraffleFromNode(node, parent_graf, graphics):
+  """Creates a OmniGraffle node from TreeNode |node|, and attaches it to the
+  parent Graffle node |parent_graph|."""
+  # Create a Graffle node for this node.
+  graf = _CreateGraffleNode(node)
   graphics.append(graf)
   
-  for child in node.children:
-    child_grafs = _CreateGraffleFromNode(child)
-    for cgraf in child_grafs:
-      graphics.append(cgraf)
-      graphics.append(_CreateGraffleLink(cgraf, graf))
+  # If we're not the root, then attach this new Graffle node to the parent.
+  if parent_graf != None:
+    graphics.append(_CreateGraffleLink(graf, parent_graf))
   
-  return graphics
+  # Go over each child, repeating this process.
+  for child in node.children:
+    _CreateGraffleFromNode(child, graf, graphics)
 
 def CreateGraffle(root):
   """Creates a dictionary, representing an OmniGraffle document."""
   global gid
-  gid = 3
-  doc = dict()
+  gid      = 3
+  graphics = list()
+  _CreateGraffleFromNode(root, None, graphics)
+  doc      = dict()
   doc['AutoAdjust']           = True
   doc['BackgroundGraphic']    = {
     "Class"  : "SolidGraphic",
     "ID"     : 2,
     "Bounds" : "{{0,0},{1000,1000}}"
   }
-  doc['GraphicsList']         = _CreateGraffleFromNode(root)
+  doc['GraphicsList']         = graphics
   doc['CanvasOrigin']         = "{0,0}"
   doc['GraphDocumentVersion'] = 6
   doc['OutlineStyle']         = "Basic"
