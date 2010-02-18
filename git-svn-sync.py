@@ -95,17 +95,14 @@ def AddExclude(path, exclude):
     if line.find(exclude) >= 0:
       fp.close()
       return
-  fp.write(exclude)
+  fp.write(exclude + "\n")
   fp.close()
 
 def Main():
   """Main function."""  
   parser = optparse.OptionParser()
-  parser.add_option("-t", "--type", choices=["svn", "git", "shallow"], default="svn", help="Type of checkout to perform for new externals. Choices are svn,git,shallow. svn is default.")  
+  parser.add_option("-t", "--type", choices=["svn", "git", "shallow"], default="git", help="Type of checkout to perform for new externals. Choices are svn,git,shallow. git is default.")  
   (options, args) = parser.parse_args()
-  if options.type != "svn":
-    print "Sorry, only svn clones are currently supported."
-    sys.exit(3)  
 
   git_path = GitRepoPath()
   if not git_path:
@@ -125,6 +122,8 @@ def Main():
     if not os.path.exists(".git_sync"):
       os.mkdir(".git_sync")
   
+  AddExclude(git_path, ".git_sync")
+  
   for ext in externals:
     # Fix up URLs that are relative to SVN repository root.
     url = ext[0]
@@ -142,11 +141,36 @@ def Main():
     
     # Perform the actual checkout.
     if os.path.exists(sync_path):
-      subprocess.Popen(["svn", "update", "-r", rev, sync_path]).wait()
+      # Perform an update on a git repository.
+      if os.path.exists(os.path.join(sync_path, ".git")):
+        subprocess.Popen(["git", "svn", "rebase"]).wait()
+      # Perform an update on a SVN WC.
+      elif os.path.exists(os.path.join(sync_path, ".svn")):
+        subprocess.Popen(["svn", "update", "-r", rev, sync_path]).wait()
+      else:
+        print "Unkown repository type at %s" % sync_path
     else:
-      subprocess.Popen(["svn", "checkout", "-r", rev, url, sync_path]).wait()
+      # Perform a git checkout.
+      if options.type == "git":
+        subprocess.Popen(["git", "svn", "clone", url, sync_path]).wait()
+      # Perform a SVN checkout.
+      elif options.type == "svn":
+        subprocess.Popen(["svn", "checkout", "-r", rev, url, sync_path]).wait()
+      else:
+        print "Cannot clone %s as %s" % (sync_path, options.type)
       os.symlink(sync_path, os.path.join(git_path, path))
-    AddExclude(git_path, sync_path)
-
+    AddExclude(git_path, path)
+    
+    # If the checkout is a git one, then we need to find the proper SVN revision.
+    if os.path.exists(os.path.join(sync_path, ".git")):
+      curpath = os.getcwd()
+      os.chdir(sync_path)
+      get_rev = subprocess.Popen(["git", "svn", "log", "--show-commit", "-r", rev], stdout=subprocess.PIPE)
+      get_rev.wait()
+      oneline = get_rev.stdout.readlines()[1].split(' | ')
+      subprocess.Popen(["git", "checkout", oneline[1]]).wait()
+      os.chdir(curpath)
+  # end for
+  
 if __name__ == '__main__':
   Main()
