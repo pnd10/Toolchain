@@ -26,7 +26,7 @@ with that is cloned from SVN. Running this will perform a git-svn-rebase and
 will then update exteranls.
 
 The external checkouts can be either svn working copies, full git repositories,
-or shallow (no history) git repositories. The default is an SVN working copy.
+or shallow (no history) git repositories. The default is a full git repository.
 
 Usage:
 
@@ -98,10 +98,27 @@ def AddExclude(path, exclude):
   fp.write(exclude + "\n")
   fp.close()
 
+def FixupExternals(svn_root, url, path):
+    """ Externals from version 1.5 onwards are mis-parsed by git svn show-externals
+    Fix them up by spliting around the relative character, and putting the prefix
+    onto the start of path.
+    e.g. An external in app/app1 of ^/trunk/lib/lib1 at rev 1234 would appear in
+    the output as
+         /app/app1/^/trunk/lib/lib1@1234 lib1
+    this needs to be fixed up as
+         <svn_root>/trunk/lib/lib1@1234 app/app1/lib1
+    """
+    if '^/' in url:
+        prefix, url = url.split('^/')
+        path = os.path.join(prefix, path)
+        path = path.lstrip('/')
+        url = svn_root + '/' + url
+    return (url, path)
+
 def Main():
-  """Main function."""  
+  """Main function."""
   parser = optparse.OptionParser()
-  parser.add_option("-t", "--type", choices=["svn", "git", "shallow"], default="git", help="Type of checkout to perform for new externals. Choices are svn,git,shallow. git is default.")  
+  parser.add_option("-t", "--type", choices=["svn", "git", "shallow"], default="git", help="Type of checkout to perform for new externals. Choices are svn,git,shallow. git is default.")
   (options, args) = parser.parse_args()
 
   git_path = GitRepoPath()
@@ -109,36 +126,38 @@ def Main():
     print "Please run this script from within a git repository."
     sys.exit(1)
   os.chdir(git_path)
-  
+
   if not IsGitSVN(git_path):
     print "This git repository was not cloned via git-svn."
     sys.exit(2)
-  
-  # Important info for cloneing.
+
+  # Important info for cloning.
   svn_root = GetSVNRoot()
   externals = GetExternals()
-  
+
   if len(externals) > 0:
     if not os.path.exists(".git_sync"):
       os.mkdir(".git_sync")
-  
+
   AddExclude(git_path, ".git_sync")
-  
+
   for ext in externals:
     # Fix up URLs that are relative to SVN repository root.
     url = ext[0]
     path = ext[1]
-    if url[0:3] == "/^/":
-      url = url[1:]
-    if url[0:2] == "^/":
-      url = svn_root + "/" + url[2:]
-    
+    url, path = FixupExternals(svn_root, url, path)
+
     # Split out revision information.
     url_parts = url.split('@')
     url = url_parts[0]
-    rev = url_parts[1]
+    if len(url_parts) > 1:
+      rev = url_parts[1]
+      external_pinned = True
+    else:
+      rev = 'HEAD'
+      external_pinned = False
     sync_path = os.path.join(".git_sync", path)
-    
+
     # Perform the actual checkout.
     if os.path.exists(sync_path):
       # Perform an update on a git repository.
@@ -148,7 +167,7 @@ def Main():
       elif os.path.exists(os.path.join(sync_path, ".svn")):
         subprocess.Popen(["svn", "update", "-r", rev, sync_path]).wait()
       else:
-        print "Unkown repository type at %s" % sync_path
+        print "Unknown repository type at %s" % sync_path
     else:
       # Perform a git checkout.
       if options.type == "git":
@@ -158,19 +177,26 @@ def Main():
         subprocess.Popen(["svn", "checkout", "-r", rev, url, sync_path]).wait()
       else:
         print "Cannot clone %s as %s" % (sync_path, options.type)
-      os.symlink(sync_path, os.path.join(git_path, path))
+      # To deal with externals deep in the tree, symlinks need to count the
+      # number of path elements they have to go up to get to the head of the tree
+      os.symlink(os.path.join('../' * path.count('/'), sync_path),
+                 os.path.join(git_path, path))
     AddExclude(git_path, path)
-    
+
     # If the checkout is a git one, then we need to find the proper SVN revision.
     if os.path.exists(os.path.join(sync_path, ".git")):
       curpath = os.getcwd()
       os.chdir(sync_path)
-      get_rev = subprocess.Popen(["git", "svn", "log", "--show-commit", "-r", rev], stdout=subprocess.PIPE)
+      if external_pinned:
+        get_rev = subprocess.Popen(["git", "svn", "log", "--show-commit", "-r", rev], stdout=subprocess.PIPE)
+      else:
+        get_rev = subprocess.Popen(["git", "svn", "log", "--show-commit"], stdout=subprocess.PIPE)
       get_rev.wait()
       oneline = get_rev.stdout.readlines()[1].split(' | ')
       subprocess.Popen(["git", "checkout", oneline[1]]).wait()
       os.chdir(curpath)
   # end for
-  
+
 if __name__ == '__main__':
   Main()
+
