@@ -160,15 +160,20 @@ def Main():
 
     # Perform the actual checkout.
     if os.path.exists(sync_path):
+      print "Updating external at", path
       # Perform an update on a git repository.
       if os.path.exists(os.path.join(sync_path, ".git")):
+        curpath = os.getcwd()
+        os.chdir(sync_path)
         subprocess.Popen(["git", "svn", "rebase"]).wait()
+        os.chdir(curpath)
       # Perform an update on a SVN WC.
       elif os.path.exists(os.path.join(sync_path, ".svn")):
         subprocess.Popen(["svn", "update", "-r", rev, sync_path]).wait()
       else:
         print "Unknown repository type at %s" % sync_path
     else:
+      print "Initial checkout of external at", path
       # Perform a git checkout.
       if options.type == "git":
         subprocess.Popen(["git", "svn", "clone", url, sync_path]).wait()
